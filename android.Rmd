@@ -1,0 +1,39 @@
+---
+title: "Analisis Android"
+author: "Alfonso Salas"
+date: '2022-05-18'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Analisis
+
+Se va a realizar un analisis de los datos proporcionados por VirusTotal en forma de JSON. Primero se han de preparar los datos para su analisis, por lo que la primera transfromacion que debemos hacer es de JSON a listas de listas.
+
+```{r }
+## Primero leemos los nombres de archivos (Recortados manualmente para que no estalle la funcion)
+filenames <- list.files(pattern=".json",recursive = TRUE, path = "./Android")
+filenames
+
+
+## A continuacion leemos los datos de los JSON que hemos encontrado en la carpeta
+library(jsonlite)  
+library(dplyr)
+android <- fromJSON(readLines(filenames[1], warn=FALSE, skipNul = FALSE))
+android
+
+#Ya podemos trabajar con un objeto R(lista de listas) que contiene los datos de los JSON
+#Ahora vamos a hacer un dataframe de cada una de las listas
+
+
+funcion <- function(x){
+    rapply(x, funcion);
+    return(as.data.frame(x));
+}
+
+androidpr <- lapply(android, rapply(, as.data.frame))
+```
+
