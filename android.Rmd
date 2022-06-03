@@ -18,21 +18,30 @@ Se va a realizar un analisis de los datos proporcionados por VirusTotal en forma
 
 ```{r }
 ## Primero leemos los nombres de archivos (Recortados manualmente para que no estalle la funcion)
+
+library(jsonlite)
+library(curl)
+library(tidyjson)
+library(tidyr)
+library(dplyr)
+library(purrr)
+library(tidyverse)
+library(rjson)
+library(ggplot2)
+
 filenames <- list.files(pattern=".json",recursive = TRUE, path = ".")
 filenames
 
+df_total = data.frame()
+for (i in 1:183){
+  # vector output
+  model <- read_json(filenames[i])
+  # add vector to a dataframe
+  df_total <- rbind(bind_rows(df_total,model  %>%
+  spread_all(., recursive = TRUE)))
+}
 
-## A continuacion leemos los datos de los JSON que hemos encontrado en la carpeta
-library(jsonlite)  
-library(dplyr)
-android <- fromJSON(readLines(filenames[1], warn=FALSE, skipNul = FALSE))
 
-
-#Ya podemos trabajar con un objeto R(lista de listas) que contiene los datos de los JSON
-#Ahora vamos a hacer un dataframe de cada una de las listas
-
-androidpr <- as.data.frame(t(sapply(filenames, fromJSON)))
-androidpr
 ```
 
 
@@ -43,10 +52,21 @@ A continuación vamos a hacer un analisis de la informacion que nos han comparti
 ```{r}
 
 
+library(ggplot2)
+library(dplyr)
 
 
+dat <- android %>% mutate(detections = sum(scans$detected = TRUE))
 
+dat <- android %>% select(as.data.frame(size), as.data.frame(positives))
 
+ggplot(df_total,
+       aes(x = size,
+           y = total)) +
+  geom_point() +
+  facet_wrap(.~type)
+
+grpSnsdata <- kmeans(df_total[,c("size","total")], centers=3, nstart=10)
 
 
 
