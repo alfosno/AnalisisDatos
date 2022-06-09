@@ -63,6 +63,31 @@ dat <- android %>% select(as.data.frame(size), as.data.frame(positives))
 ggplot(df_total,
        aes(x = size,
            y = total)) +
+  geom_line() +
+  facet_wrap(.~type)
+
+grpSnsdata <- kmeans(df_total[,c("size","total")], centers=3, nstart=10)
+
+
+
+```
+
+No hemos encontrado una correlacion clara, pero si seguimos ploteando
+
+```{r}
+
+
+library(ggplot2)
+library(dplyr)
+
+
+dat <- android %>% mutate(detections = sum(scans$detected = TRUE))
+
+dat <- android %>% select(as.data.frame(size), as.data.frame(positives))
+
+ggplot(df_total,
+       aes(x = scan_date,
+           y = first_seen)) +
   geom_point() +
   facet_wrap(.~type)
 
@@ -72,3 +97,101 @@ grpSnsdata <- kmeans(df_total[,c("size","total")], centers=3, nstart=10)
 
 ```
 
+Y es que por regla general siempre tardan el mismo tiempo en detectarlos (recta x= y) pero si que hay algunos que son interceptados incluso antes ( cúmulo inferior )
+
+
+Probamos a encontrar reglas de asociacion en el dataset que hemos construido.En este caso vamos a buscar reglas con un soporte determinado y una confianza determinada.
+
+
+
+```{r}
+
+na.omit(df_total)
+
+mis_reglas<- apriori(df_total,parameter= list(support=0.28818,confidence=0.27634,minlen = 2))
+length(mis_reglas)
+
+
+mis_reglas[2]@quality$support
+  
+mis_reglas <- sort(mis_reglas,by  = "support")
+inspect(tail(mis_reglas,4))
+
+rules2 <- subset(mis_reglas,subset = lift > 1)
+rules2 <- sort(rules2,by = "confidence")
+rules2[1]@quality$confidence
+inspect(head(rules2))
+
+length(subset(mis_reglas,subset = rhs %ain% c("VeilColor=white") & confidence > 0.3846154))
+inspect(head(subset(mis_reglas,subset = rhs %ain% c("VeilColor=white") & confidence > 0.3846154)))
+
+length(subset(mis_reglas,subset = lhs %ain% c("GillAttached=free")))
+inspect(head(subset(mis_reglas,subset = lhs %ain% c("GillAttached=free"))))
+
+mis_reglas <- sort(mis_reglas,by  = "confidence")
+inspect(mis_reglas[3544]@rhs)
+aux <- as.trans
+count(Mushroom,VeilType=="partial")
+
+
+
+
+
+
+
+
+```
+
+
+De este dataset, vamos a buscar agruparlos por clusters
+
+
+
+```{r}
+
+na.omit()
+df_total %>% select(5,6,8,15)
+
+grp <- df_total %>% 
+  select(5,6,8,14,15) %>%
+  kmeans(centers=3, nstart=10)
+grOrdered <- order(grp$cluster)
+res <- data.frame(df_total$total[grOrdered],df_total$size[grOrdered],df_total$times_submitted[grOrdered],df_total$positives[grOrdered])
+
+## RES CONTIENE UN DATA FRAME CON LAS COLUMNAS QUE CONSIDERAMOS INTERESANTES PARA EL ANALISIS
+
+#Tamaño de cada grupo
+grp$size
+grp$centers
+
+library(factoextra)
+fviz_nbclust(x = res , FUNcluster = pam, method = "wss",diss = dist(res, method = "manhattan"))
+#A partir del 5 se estabiliza la función, por tanto el número óptimo es 5
+grp <- res %>%   
+  kmeans(centers=5, nstart=10)
+grOrdered <- order(grp$cluster)
+res2 <- data.frame(df_total$total[grOrdered],df_total$size[grOrdered],df_total$times_submitted[grOrdered],df_total$positives[grOrdered])
+#Tamaño de cada grupo
+grp$size
+
+```
+
+
+A continuacion, vamos a mostrar un dendograma
+
+
+```{r}
+
+
+distances = dist(res, method = "euclidean")
+length(distances)
+
+clusters <- distances %>%
+  hclust( method="ward.D")
+
+plot(clusters, main="Dendrogram", labels=df_total$total, cex=0.8, hang=-1)
+
+
+```
+
+El dendograma que ordena en 5 clusters indicando el total de analisis.
